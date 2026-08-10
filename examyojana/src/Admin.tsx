@@ -886,8 +886,7 @@ function Admin({ onBack }: AdminProps) {
 
           </div>
         </section>
-
-              {/* =================================================
+                {/* =================================================
             ARTICLE CONTENT
         ================================================= */}
 
@@ -939,9 +938,10 @@ Final form submit करें।`}
             label="Vacancy Details"
             value={form.vacancyDetails}
             onChange={(value) => updateField("vacancyDetails", value)}
-            placeholder={`Junior Statistical Officer | 3500
-Assistant Section Officer | 1200`}
-            help="हर line में इस format में लिखें: Post Name | Vacancy"
+            placeholder={`Junior Statistical Officer | 450
+Assistant Section Officer | 1200
+Tax Assistant | 850`}
+            help="Format रखें: Post Name | Vacancy"
             full
           />
         </section>
@@ -1089,7 +1089,94 @@ Assistant Section Officer | 1200`}
 
           <AdminPostManagement
             onEdit={(post) => {
-              editPost(post);
+              setForm({
+                title: post.title || "",
+                category: post.category,
+                state: post.state || "Bihar",
+
+                organization: post.organization || "",
+                postName: post.postName || "",
+                totalVacancy: post.totalVacancy || "",
+
+                applicationStart: post.applicationStart || "",
+                applicationLastDate:
+                  post.applicationLastDate || "",
+                examDate: post.examDate || "",
+
+                fee: post.fee || "",
+                ageLimit: post.ageLimit || "",
+                qualification: post.qualification || "",
+                eligibility: post.eligibility || "",
+
+                description: post.description || "",
+
+                applyUrl:
+                  post.links?.find((link) =>
+                    link.label
+                      .toLowerCase()
+                      .includes("apply")
+                  )?.url || "",
+
+                notificationUrl:
+                  post.links?.find((link) =>
+                    link.label
+                      .toLowerCase()
+                      .includes("notification")
+                  )?.url || "",
+
+                admitCardUrl:
+                  post.links?.find((link) =>
+                    link.label
+                      .toLowerCase()
+                      .includes("admit")
+                  )?.url || "",
+
+                resultUrl:
+                  post.links?.find((link) =>
+                    link.label
+                      .toLowerCase()
+                      .includes("result")
+                  )?.url || "",
+
+                answerKeyUrl:
+                  post.links?.find((link) =>
+                    link.label
+                      .toLowerCase()
+                      .includes("answer key")
+                  )?.url || "",
+
+                officialUrl:
+                  post.officialUrl ||
+                  post.links?.find((link) =>
+                    link.label
+                      .toLowerCase()
+                      .includes("official")
+                  )?.url ||
+                  "",
+
+                documents:
+                  post.documents?.join("\n") || "",
+
+                howToApply:
+                  post.howToApply?.join("\n") || "",
+
+                vacancyDetails:
+                  post.vacancyDetails
+                    ?.map(
+                      (item) =>
+                        `${item.post} | ${item.vacancy}`
+                    )
+                    .join("\n") || "",
+              });
+
+              setEditingId(post.id);
+              setGeneratedData(null);
+              setSaved(false);
+
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              });
             }}
           />
         </section>
@@ -1180,7 +1267,9 @@ function AdminSelect({
 
       <select
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -1219,7 +1308,9 @@ function AdminTextarea({
 
       <textarea
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
         placeholder={placeholder}
         rows={6}
       />
@@ -1284,10 +1375,13 @@ function AdminPostManagement({
       setPosts(updatedPosts);
 
       window.dispatchEvent(
-        new CustomEvent("exam-yojana-post-created")
+        new Event("exam-yojana-post-created")
       );
     } catch (error) {
-      console.error("Delete post error:", error);
+      console.error(
+        "Delete post error:",
+        error
+      );
 
       alert("Post delete नहीं हो सकी।");
     }
@@ -1301,7 +1395,8 @@ function AdminPostManagement({
         <h3>No Admin Posts</h3>
 
         <p>
-          अभी तक Admin Panel से कोई post create नहीं की गई है।
+          अभी तक Admin Panel से कोई post create नहीं की
+          गई है।
         </p>
       </div>
     );
@@ -1338,7 +1433,9 @@ function AdminPostManagement({
             <button
               type="button"
               className="admin-delete-button"
-              onClick={() => deletePost(post.id)}
+              onClick={() =>
+                deletePost(post.id)
+              }
             >
               🗑 Delete
             </button>
