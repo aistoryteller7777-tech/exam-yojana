@@ -887,7 +887,7 @@ function Admin({ onBack }: AdminProps) {
           </div>
         </section>
 
-                {/* =================================================
+              {/* =================================================
             ARTICLE CONTENT
         ================================================= */}
 
@@ -939,10 +939,9 @@ Final form submit करें।`}
             label="Vacancy Details"
             value={form.vacancyDetails}
             onChange={(value) => updateField("vacancyDetails", value)}
-            placeholder={`SSC CGL | 3500
-Junior Statistical Officer | 450
+            placeholder={`Junior Statistical Officer | 3500
 Assistant Section Officer | 1200`}
-            help="हर post नई line में लिखें और Post तथा Vacancy के बीच | लगाएँ।"
+            help="हर line में इस format में लिखें: Post Name | Vacancy"
             full
           />
         </section>
@@ -1028,24 +1027,12 @@ Assistant Section Officer | 1200`}
             Reset
           </button>
 
-          {editingId !== null && (
-            <button
-              type="button"
-              className="admin-reset"
-              onClick={cancelEdit}
-            >
-              Cancel Edit
-            </button>
-          )}
-
           <button
             type="button"
             className="admin-submit"
             onClick={createPost}
           >
-            {editingId !== null
-              ? "✓ Update & Save Post"
-              : "✓ Generate & Save Post"}
+            ✓ Generate & Save Post
           </button>
         </div>
 
@@ -1061,9 +1048,7 @@ Assistant Section Officer | 1200`}
               <div>
                 <h2>Generated Data</h2>
 
-                <small>
-                  Post successfully saved.
-                </small>
+                <small>Post successfully saved.</small>
               </div>
             </div>
 
@@ -1278,14 +1263,8 @@ function AdminPostManagement({
   });
 
   const deletePost = (id: number) => {
-    const post = posts.find((item) => item.id === id);
-
-    if (!post) {
-      return;
-    }
-
     const confirmed = window.confirm(
-      `क्या आप "${post.title}" को delete करना चाहते हैं?`
+      "क्या आप इस post को delete करना चाहते हैं?"
     );
 
     if (!confirmed) {
@@ -1294,7 +1273,7 @@ function AdminPostManagement({
 
     try {
       const updatedPosts = posts.filter(
-        (item) => item.id !== id
+        (post) => post.id !== id
       );
 
       localStorage.setItem(
@@ -1305,7 +1284,7 @@ function AdminPostManagement({
       setPosts(updatedPosts);
 
       window.dispatchEvent(
-        new Event("exam-yojana-post-created")
+        new CustomEvent("exam-yojana-post-created")
       );
     } catch (error) {
       console.error("Delete post error:", error);
