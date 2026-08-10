@@ -908,57 +908,40 @@ Final form submit करें।`}
           <AdminPostManagement
             onEdit={(post) => {
               setForm({
-                title: post.title,
-                category: post.category,
-                state: post.state,
+  title: post.title || "",
+  category: post.category,
+  state: post.state || "Bihar",
 
-                organization: post.organization || "",
-                postName: post.postName || "",
-                totalVacancy: post.totalVacancy || "",
-                vacancyDetails: post.vacancyDetails || [],
+  organization: post.organization || "",
+  postName: post.postName || "",
+  totalVacancy: post.totalVacancy || "",
 
-                applicationStart: post.applicationStart || "",
-                applicationLastDate: post.applicationLastDate || "",
-                examDate: post.examDate || "",
+  applicationStart: post.applicationStart || "",
+  applicationLastDate: post.applicationLastDate || "",
+  examDate: post.examDate || "",
 
-                fee: post.fee || "",
-                ageLimit: post.ageLimit || "",
-                qualification: post.qualification || "",
-                eligibility: post.eligibility || "",
+  fee: post.fee || "",
+  ageLimit: post.ageLimit || "",
+  qualification: post.qualification || "",
+  eligibility: post.eligibility || "",
 
-                description: post.description || "",
+  description: post.description || "",
 
-                applyUrl:
-                  post.links?.find((link) =>
-                    link.label.toLowerCase().includes("apply")
-                  )?.url || "",
+  applyUrl: findLink(["apply", "online"]),
+  notificationUrl: findLink(["notification", "notice"]),
+  admitCardUrl: findLink(["admit"]),
+  resultUrl: findLink(["result"]),
+  answerKeyUrl: findLink(["answer key"]),
+  officialUrl: post.officialUrl || findLink(["official", "website"]),
 
-                notificationUrl:
-                  post.links?.find((link) =>
-                    link.label.toLowerCase().includes("notification")
-                  )?.url || "",
+  documents: post.documents?.join("\n") || "",
+  howToApply: post.howToApply?.join("\n") || "",
 
-                admitCardUrl:
-                  post.links?.find((link) =>
-                    link.label.toLowerCase().includes("admit")
-                  )?.url || "",
-
-                resultUrl:
-                  post.links?.find((link) =>
-                    link.label.toLowerCase().includes("result")
-                  )?.url || "",
-
-                answerKeyUrl:
-                  post.links?.find((link) =>
-                    link.label.toLowerCase().includes("answer")
-                  )?.url || "",
-
-                officialUrl: post.officialUrl || "",
-
-                documents: post.documents?.join("\n") || "",
-
-                howToApply: post.howToApply?.join("\n") || "",
-              });
+  vacancyDetails:
+    post.vacancyDetails
+      ?.map((item) => `${item.post} | ${item.vacancy}`)
+      .join("\n") || "",
+});
 
               setGeneratedData(null);
               setSaved(false);
