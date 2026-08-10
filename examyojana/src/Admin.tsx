@@ -927,14 +927,40 @@ Final form submit करें।`}
 
   description: post.description || "",
 
-  applyUrl: findLink(["apply", "online"]),
-  notificationUrl: findLink(["notification", "notice"]),
-  admitCardUrl: findLink(["admit"]),
-  resultUrl: findLink(["result"]),
-  answerKeyUrl: findLink(["answer key"]),
-  officialUrl: post.officialUrl || findLink(["official", "website"]),
+  applyUrl:
+    post.links?.find((link) =>
+      link.label.toLowerCase().includes("apply")
+    )?.url || "",
+
+  notificationUrl:
+    post.links?.find((link) =>
+      link.label.toLowerCase().includes("notification")
+    )?.url || "",
+
+  admitCardUrl:
+    post.links?.find((link) =>
+      link.label.toLowerCase().includes("admit")
+    )?.url || "",
+
+  resultUrl:
+    post.links?.find((link) =>
+      link.label.toLowerCase().includes("result")
+    )?.url || "",
+
+  answerKeyUrl:
+    post.links?.find((link) =>
+      link.label.toLowerCase().includes("answer key")
+    )?.url || "",
+
+  officialUrl:
+    post.officialUrl ||
+    post.links?.find((link) =>
+      link.label.toLowerCase().includes("official")
+    )?.url ||
+    "",
 
   documents: post.documents?.join("\n") || "",
+
   howToApply: post.howToApply?.join("\n") || "",
 
   vacancyDetails:
@@ -942,14 +968,6 @@ Final form submit करें।`}
       ?.map((item) => `${item.post} | ${item.vacancy}`)
       .join("\n") || "",
 });
-
-              setGeneratedData(null);
-              setSaved(false);
-
-              window.scrollTo({
-                top: 0,
-                behavior: "smooth",
-              });
             }}
           />
         </section>
