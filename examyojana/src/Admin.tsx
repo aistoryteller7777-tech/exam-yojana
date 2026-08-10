@@ -915,6 +915,7 @@ Final form submit करें।`}
                 organization: post.organization || "",
                 postName: post.postName || "",
                 totalVacancy: post.totalVacancy || "",
+                vacancyDetails: post.vacancyDetails || [],
 
                 applicationStart: post.applicationStart || "",
                 applicationLastDate: post.applicationLastDate || "",
