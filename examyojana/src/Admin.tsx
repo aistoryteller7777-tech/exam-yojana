@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { data } from "./data";
 import type { Category, LinkItem } from "./data";
 
 type AdminProps = {
@@ -96,6 +95,10 @@ const emptyForm: FormState = {
 
 function getStoredPosts(): LinkItem[] {
   try {
+    if (typeof window === "undefined") {
+      return [];
+    }
+
     const saved = localStorage.getItem(STORAGE_KEY);
 
     if (!saved) {
@@ -109,7 +112,8 @@ function getStoredPosts(): LinkItem[] {
     }
 
     return parsed as LinkItem[];
-  } catch {
+  } catch (error) {
+    console.error("Storage read error:", error);
     return [];
   }
 }
@@ -119,7 +123,8 @@ function getStoredPosts(): LinkItem[] {
 ========================================================= */
 
 function Admin({ onBack }: AdminProps) {
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [form, setForm] =
+    useState<FormState>(emptyForm);
 
   const [managedPosts, setManagedPosts] =
     useState<LinkItem[]>(getStoredPosts);
@@ -127,7 +132,8 @@ function Admin({ onBack }: AdminProps) {
   const [editingId, setEditingId] =
     useState<number | null>(null);
 
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] =
+    useState(false);
 
   const [generatedData, setGeneratedData] =
     useState<LinkItem | null>(null);
@@ -153,7 +159,9 @@ function Admin({ onBack }: AdminProps) {
   ======================================================= */
 
   const buildLinks = (): LinkItem["links"] => {
-    const links: NonNullable<LinkItem["links"]> = [];
+    const links: NonNullable<
+      LinkItem["links"]
+    > = [];
 
     if (form.applyUrl.trim()) {
       links.push({
@@ -197,40 +205,53 @@ function Admin({ onBack }: AdminProps) {
       });
     }
 
-    return links.length > 0 ? links : undefined;
+    return links.length > 0
+      ? links
+      : undefined;
   };
 
   /* =======================================================
      BUILD POST
   ======================================================= */
 
-  const buildPost = (id: number): LinkItem => {
-    const documents = form.documents
-      .split("\n")
-      .map((item) => item.trim())
-      .filter(Boolean);
+  const buildPost = (
+    id: number
+  ): LinkItem => {
+    const documents =
+      form.documents
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean);
 
-    const howToApply = form.howToApply
-      .split("\n")
-      .map((item) => item.trim())
-      .filter(Boolean);
+    const howToApply =
+      form.howToApply
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean);
 
-    const vacancyDetails = form.vacancyDetails
-      .split("\n")
-      .map((item) => item.trim())
-      .filter(Boolean)
-      .map((item) => {
-        const parts = item.split("|");
+    const vacancyDetails =
+      form.vacancyDetails
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .map((item) => {
+          const parts = item.split("|");
 
-        return {
-          post: parts[0]?.trim() || "",
-          vacancy:
-            parts.slice(1).join("|").trim() || "",
-        };
-      })
-      .filter(
-        (item) => item.post && item.vacancy
-      );
+          return {
+            post:
+              parts[0]?.trim() || "",
+            vacancy:
+              parts
+                .slice(1)
+                .join("|")
+                .trim() || "",
+          };
+        })
+        .filter(
+          (item) =>
+            item.post &&
+            item.vacancy
+        );
 
     return {
       id,
@@ -250,38 +271,48 @@ function Admin({ onBack }: AdminProps) {
         }
       ),
 
-      description: form.description.trim(),
+      description:
+        form.description.trim(),
 
       organization:
-        form.organization.trim() || undefined,
+        form.organization.trim() ||
+        undefined,
 
       postName:
-        form.postName.trim() || undefined,
+        form.postName.trim() ||
+        undefined,
 
       totalVacancy:
-        form.totalVacancy.trim() || undefined,
+        form.totalVacancy.trim() ||
+        undefined,
 
       applicationStart:
-        form.applicationStart.trim() || undefined,
+        form.applicationStart.trim() ||
+        undefined,
 
       applicationLastDate:
         form.applicationLastDate.trim() ||
         undefined,
 
       examDate:
-        form.examDate.trim() || undefined,
+        form.examDate.trim() ||
+        undefined,
 
       fee:
-        form.fee.trim() || undefined,
+        form.fee.trim() ||
+        undefined,
 
       ageLimit:
-        form.ageLimit.trim() || undefined,
+        form.ageLimit.trim() ||
+        undefined,
 
       qualification:
-        form.qualification.trim() || undefined,
+        form.qualification.trim() ||
+        undefined,
 
       eligibility:
-        form.eligibility.trim() || undefined,
+        form.eligibility.trim() ||
+        undefined,
 
       documents:
         documents.length > 0
@@ -299,7 +330,8 @@ function Admin({ onBack }: AdminProps) {
           : undefined,
 
       officialUrl:
-        form.officialUrl.trim() || undefined,
+        form.officialUrl.trim() ||
+        undefined,
 
       links: buildLinks(),
     };
@@ -309,46 +341,68 @@ function Admin({ onBack }: AdminProps) {
      SAVE POSTS
   ======================================================= */
 
-  const savePosts = (posts: LinkItem[]) => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(posts)
-    );
+  const savePosts = (
+    posts: LinkItem[]
+  ) => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(posts)
+      );
 
-    setManagedPosts(posts);
+      setManagedPosts(posts);
 
-    window.dispatchEvent(
-      new Event("exam-yojana-post-created")
-    );
+      window.dispatchEvent(
+        new Event(
+          "exam-yojana-post-created"
+        )
+      );
+    } catch (error) {
+      console.error(
+        "Storage save error:",
+        error
+      );
+
+      alert(
+        "Post save नहीं हो सकी। Browser storage check करें।"
+      );
+    }
   };
 
   /* =======================================================
-     CREATE / UPDATE
+     CREATE / UPDATE POST
   ======================================================= */
 
   const createPost = () => {
     if (!form.title.trim()) {
-      alert("Post Title भरना जरूरी है।");
+      alert(
+        "Post Title भरना जरूरी है।"
+      );
       return;
     }
 
     if (!form.description.trim()) {
-      alert("Description भरना जरूरी है।");
+      alert(
+        "Description भरना जरूरी है।"
+      );
       return;
     }
 
     try {
-      const oldPosts = getStoredPosts();
+      const oldPosts =
+        getStoredPosts();
 
-      /* EDIT */
+      /* EDIT MODE */
 
       if (editingId !== null) {
         const newPost =
           buildPost(editingId);
 
-        const exists = oldPosts.some(
-          (post) => post.id === editingId
-        );
+        const exists =
+          oldPosts.some(
+            (post) =>
+              post.id === editingId
+          );
 
         if (!exists) {
           alert(
@@ -357,12 +411,12 @@ function Admin({ onBack }: AdminProps) {
           return;
         }
 
-        const updatedPosts = oldPosts.map(
-          (post) =>
+        const updatedPosts =
+          oldPosts.map((post) =>
             post.id === editingId
               ? newPost
               : post
-        );
+          );
 
         savePosts(updatedPosts);
 
@@ -377,11 +431,10 @@ function Admin({ onBack }: AdminProps) {
         return;
       }
 
-      /* CREATE */
+      /* CREATE MODE */
 
-      const newPost = buildPost(
-        Date.now()
-      );
+      const newPost =
+        buildPost(Date.now());
 
       const updatedPosts = [
         newPost,
@@ -418,20 +471,26 @@ function Admin({ onBack }: AdminProps) {
      EDIT POST
   ======================================================= */
 
-  const editPost = (post: LinkItem) => {
-    const links = post.links ?? [];
+  const editPost = (
+    post: LinkItem
+  ) => {
+    const links =
+      post.links ?? [];
 
     const findLink = (
       keywords: string[]
     ): string => {
-      const found = links.find(
-        (link) =>
-          keywords.some((keyword) =>
-            link.label
-              .toLowerCase()
-              .includes(keyword)
+      const found =
+        links.find((link) =>
+          keywords.some(
+            (keyword) =>
+              link.label
+                .toLowerCase()
+                .includes(
+                  keyword.toLowerCase()
+                )
           )
-      );
+        );
 
       return found?.url || "";
     };
@@ -445,9 +504,11 @@ function Admin({ onBack }: AdminProps) {
         .join("\n") || "";
 
     setForm({
-      title: post.title || "",
+      title:
+        post.title || "",
 
-      category: post.category,
+      category:
+        post.category,
 
       state:
         post.state || "Bihar",
@@ -501,7 +562,9 @@ function Admin({ onBack }: AdminProps) {
         findLink(["result"]),
 
       answerKeyUrl:
-        findLink(["answer key"]),
+        findLink([
+          "answer key",
+        ]),
 
       officialUrl:
         post.officialUrl ||
@@ -511,10 +574,14 @@ function Admin({ onBack }: AdminProps) {
         ]),
 
       documents:
-        post.documents?.join("\n") || "",
+        post.documents?.join(
+          "\n"
+        ) || "",
 
       howToApply:
-        post.howToApply?.join("\n") || "",
+        post.howToApply?.join(
+          "\n"
+        ) || "",
 
       vacancyDetails:
         vacancyText,
@@ -533,13 +600,16 @@ function Admin({ onBack }: AdminProps) {
   };
 
   /* =======================================================
-     DELETE SINGLE
+     DELETE SINGLE POST
   ======================================================= */
 
-  const deletePost = (id: number) => {
+  const deletePost = (
+    id: number
+  ) => {
     const post =
       managedPosts.find(
-        (item) => item.id === id
+        (item) =>
+          item.id === id
       );
 
     if (!post) {
@@ -558,7 +628,8 @@ function Admin({ onBack }: AdminProps) {
     try {
       const updatedPosts =
         managedPosts.filter(
-          (item) => item.id !== id
+          (item) =>
+            item.id !== id
         );
 
       savePosts(updatedPosts);
@@ -602,7 +673,7 @@ function Admin({ onBack }: AdminProps) {
   };
 
   /* =======================================================
-     RESET
+     RESET FORM
   ======================================================= */
 
   const resetForm = () => {
@@ -621,11 +692,13 @@ function Admin({ onBack }: AdminProps) {
   };
 
   /* =======================================================
-     DELETE ALL
+     DELETE ALL POSTS
   ======================================================= */
 
   const deleteAllPosts = () => {
-    if (managedPosts.length === 0) {
+    if (
+      managedPosts.length === 0
+    ) {
       alert(
         "Delete करने के लिए कोई Admin post नहीं है।"
       );
@@ -715,34 +788,35 @@ function Admin({ onBack }: AdminProps) {
 
         {/* SUCCESS */}
 
-        {saved && generatedData && (
-          <section className="admin-success">
-            <div className="success-icon">
-              ✓
-            </div>
+        {saved &&
+          generatedData && (
+            <section className="admin-success">
+              <div className="success-icon">
+                ✓
+              </div>
 
-            <div>
-              <strong>
-                Post Successfully Saved / Updated
-              </strong>
+              <div>
+                <strong>
+                  Post Successfully Saved / Updated
+                </strong>
 
-              <p>
-                Post browser में save हो चुकी है।
-              </p>
-            </div>
-          </section>
-        )}
+                <p>
+                  Post browser में save हो चुकी है।
+                </p>
+              </div>
+            </section>
+          )}
 
-        {/* =================================================
-            BASIC INFORMATION
-        ================================================= */}
+        {/* BASIC INFORMATION */}
 
         <section className="admin-card">
           <div className="admin-section-title">
             <span>1</span>
 
             <div>
-              <h2>Basic Information</h2>
+              <h2>
+                Basic Information
+              </h2>
 
               <small>
                 पोस्ट की मुख्य जानकारी
@@ -828,9 +902,7 @@ function Admin({ onBack }: AdminProps) {
           </div>
         </section>
 
-        {/* =================================================
-            IMPORTANT DATES
-        ================================================= */}
+        {/* IMPORTANT DATES */}
 
         <section className="admin-card">
           <div className="admin-section-title">
@@ -879,7 +951,9 @@ function Admin({ onBack }: AdminProps) {
 
             <AdminInput
               label="Exam Date"
-              value={form.examDate}
+              value={
+                form.examDate
+              }
               onChange={(value) =>
                 updateField(
                   "examDate",
@@ -903,7 +977,6 @@ function Admin({ onBack }: AdminProps) {
 
           </div>
         </section>
-
         {/* =================================================
             ELIGIBILITY
         ================================================= */}
@@ -913,9 +986,7 @@ function Admin({ onBack }: AdminProps) {
             <span>3</span>
 
             <div>
-              <h2>
-                Eligibility Details
-              </h2>
+              <h2>Eligibility Details</h2>
 
               <small>
                 Age, qualification और eligibility
@@ -924,29 +995,20 @@ function Admin({ onBack }: AdminProps) {
           </div>
 
           <div className="admin-grid">
-
             <AdminInput
               label="Age Limit"
               value={form.ageLimit}
               onChange={(value) =>
-                updateField(
-                  "ageLimit",
-                  value
-                )
+                updateField("ageLimit", value)
               }
               placeholder="18-27 Years"
             />
 
             <AdminInput
               label="Qualification"
-              value={
-                form.qualification
-              }
+              value={form.qualification}
               onChange={(value) =>
-                updateField(
-                  "qualification",
-                  value
-                )
+                updateField("qualification", value)
               }
               placeholder="Graduation"
             />
@@ -955,15 +1017,11 @@ function Admin({ onBack }: AdminProps) {
               label="Eligibility"
               value={form.eligibility}
               onChange={(value) =>
-                updateField(
-                  "eligibility",
-                  value
-                )
+                updateField("eligibility", value)
               }
               placeholder="Candidate must fulfill the official eligibility criteria."
               full
             />
-
           </div>
         </section>
 
@@ -976,9 +1034,7 @@ function Admin({ onBack }: AdminProps) {
             <span>4</span>
 
             <div>
-              <h2>
-                Article Content
-              </h2>
+              <h2>Article Content</h2>
 
               <small>
                 पोस्ट का पूरा article description
@@ -987,21 +1043,16 @@ function Admin({ onBack }: AdminProps) {
           </div>
 
           <div className="admin-grid">
-
             <AdminTextarea
               label="Description *"
               value={form.description}
               onChange={(value) =>
-                updateField(
-                  "description",
-                  value
-                )
+                updateField("description", value)
               }
               placeholder="यहाँ पोस्ट की पूरी जानकारी लिखें..."
               full
               rows={8}
             />
-
           </div>
         </section>
 
@@ -1014,9 +1065,7 @@ function Admin({ onBack }: AdminProps) {
             <span>5</span>
 
             <div>
-              <h2>
-                Required Documents
-              </h2>
+              <h2>Required Documents</h2>
 
               <small>
                 हर document को अलग line में लिखें
@@ -1025,15 +1074,11 @@ function Admin({ onBack }: AdminProps) {
           </div>
 
           <div className="admin-grid">
-
             <AdminTextarea
               label="Documents"
               value={form.documents}
               onChange={(value) =>
-                updateField(
-                  "documents",
-                  value
-                )
+                updateField("documents", value)
               }
               placeholder={
                 "Aadhaar Card\n" +
@@ -1044,7 +1089,6 @@ function Admin({ onBack }: AdminProps) {
               full
               rows={7}
             />
-
           </div>
         </section>
 
@@ -1057,9 +1101,7 @@ function Admin({ onBack }: AdminProps) {
             <span>6</span>
 
             <div>
-              <h2>
-                How To Apply
-              </h2>
+              <h2>How To Apply</h2>
 
               <small>
                 आवेदन करने की पूरी प्रक्रिया
@@ -1068,15 +1110,11 @@ function Admin({ onBack }: AdminProps) {
           </div>
 
           <div className="admin-grid">
-
             <AdminTextarea
               label="Application Steps"
               value={form.howToApply}
               onChange={(value) =>
-                updateField(
-                  "howToApply",
-                  value
-                )
+                updateField("howToApply", value)
               }
               placeholder={
                 "Official website खोलें।\n" +
@@ -1088,7 +1126,6 @@ function Admin({ onBack }: AdminProps) {
               full
               rows={8}
             />
-
           </div>
         </section>
 
@@ -1101,9 +1138,7 @@ function Admin({ onBack }: AdminProps) {
             <span>7</span>
 
             <div>
-              <h2>
-                Vacancy Details
-              </h2>
+              <h2>Vacancy Details</h2>
 
               <small>
                 Post और vacancy को | से अलग करें
@@ -1112,17 +1147,11 @@ function Admin({ onBack }: AdminProps) {
           </div>
 
           <div className="admin-grid">
-
             <AdminTextarea
               label="Post Wise Vacancy"
-              value={
-                form.vacancyDetails
-              }
+              value={form.vacancyDetails}
               onChange={(value) =>
-                updateField(
-                  "vacancyDetails",
-                  value
-                )
+                updateField("vacancyDetails", value)
               }
               placeholder={
                 "SSC CGL | 1500 Posts\n" +
@@ -1131,7 +1160,6 @@ function Admin({ onBack }: AdminProps) {
               full
               rows={7}
             />
-
           </div>
         </section>
 
@@ -1144,9 +1172,7 @@ function Admin({ onBack }: AdminProps) {
             <span>8</span>
 
             <div>
-              <h2>
-                Important Links
-              </h2>
+              <h2>Important Links</h2>
 
               <small>
                 Official और application links
@@ -1155,15 +1181,11 @@ function Admin({ onBack }: AdminProps) {
           </div>
 
           <div className="admin-grid">
-
             <AdminInput
               label="Apply Online URL"
               value={form.applyUrl}
               onChange={(value) =>
-                updateField(
-                  "applyUrl",
-                  value
-                )
+                updateField("applyUrl", value)
               }
               placeholder="https://example.com/apply"
               full
@@ -1171,14 +1193,9 @@ function Admin({ onBack }: AdminProps) {
 
             <AdminInput
               label="Official Notification URL"
-              value={
-                form.notificationUrl
-              }
+              value={form.notificationUrl}
               onChange={(value) =>
-                updateField(
-                  "notificationUrl",
-                  value
-                )
+                updateField("notificationUrl", value)
               }
               placeholder="https://example.com/notification"
               full
@@ -1186,14 +1203,9 @@ function Admin({ onBack }: AdminProps) {
 
             <AdminInput
               label="Admit Card URL"
-              value={
-                form.admitCardUrl
-              }
+              value={form.admitCardUrl}
               onChange={(value) =>
-                updateField(
-                  "admitCardUrl",
-                  value
-                )
+                updateField("admitCardUrl", value)
               }
               placeholder="https://example.com/admit-card"
               full
@@ -1203,10 +1215,7 @@ function Admin({ onBack }: AdminProps) {
               label="Result URL"
               value={form.resultUrl}
               onChange={(value) =>
-                updateField(
-                  "resultUrl",
-                  value
-                )
+                updateField("resultUrl", value)
               }
               placeholder="https://example.com/result"
               full
@@ -1214,14 +1223,9 @@ function Admin({ onBack }: AdminProps) {
 
             <AdminInput
               label="Answer Key URL"
-              value={
-                form.answerKeyUrl
-              }
+              value={form.answerKeyUrl}
               onChange={(value) =>
-                updateField(
-                  "answerKeyUrl",
-                  value
-                )
+                updateField("answerKeyUrl", value)
               }
               placeholder="https://example.com/answer-key"
               full
@@ -1229,19 +1233,13 @@ function Admin({ onBack }: AdminProps) {
 
             <AdminInput
               label="Official Website URL"
-              value={
-                form.officialUrl
-              }
+              value={form.officialUrl}
               onChange={(value) =>
-                updateField(
-                  "officialUrl",
-                  value
-                )
+                updateField("officialUrl", value)
               }
               placeholder="https://official-website.com"
               full
             />
-
           </div>
         </section>
 
@@ -1250,7 +1248,6 @@ function Admin({ onBack }: AdminProps) {
         ================================================= */}
 
         <section className="admin-actions">
-
           <button
             type="button"
             className="admin-submit"
@@ -1278,7 +1275,6 @@ function Admin({ onBack }: AdminProps) {
           >
             Reset Form
           </button>
-
         </section>
 
         {/* =================================================
@@ -1287,14 +1283,11 @@ function Admin({ onBack }: AdminProps) {
 
         {generatedData && (
           <section className="admin-card">
-
             <div className="admin-section-title">
               <span>✓</span>
 
               <div>
-                <h2>
-                  Saved Post Preview
-                </h2>
+                <h2>Saved Post Preview</h2>
 
                 <small>
                   अभी save हुई post
@@ -1303,25 +1296,17 @@ function Admin({ onBack }: AdminProps) {
             </div>
 
             <div className="admin-preview">
+              <h3>{generatedData.title}</h3>
 
-              <h3>
-                {generatedData.title}
-              </h3>
-
-              <p>
-                {generatedData.description}
-              </p>
+              <p>{generatedData.description}</p>
 
               <div className="preview-meta">
-
                 <span>
-                  Category:{" "}
-                  {generatedData.category}
+                  Category: {generatedData.category}
                 </span>
 
                 <span>
-                  State:{" "}
-                  {generatedData.state}
+                  State: {generatedData.state}
                 </span>
 
                 {generatedData.organization && (
@@ -1337,9 +1322,7 @@ function Admin({ onBack }: AdminProps) {
                     {generatedData.totalVacancy}
                   </span>
                 )}
-
               </div>
-
             </div>
           </section>
         )}
@@ -1349,14 +1332,11 @@ function Admin({ onBack }: AdminProps) {
         ================================================= */}
 
         <section className="admin-card">
-
           <div className="admin-section-title">
             <span>9</span>
 
             <div>
-              <h2>
-                Post Management
-              </h2>
+              <h2>Post Management</h2>
 
               <small>
                 Admin द्वारा बनाई गई posts
@@ -1365,24 +1345,19 @@ function Admin({ onBack }: AdminProps) {
           </div>
 
           <div className="management-top">
-
             <strong>
-              Total Admin Posts:{" "}
-              {managedPosts.length}
+              Total Admin Posts: {managedPosts.length}
             </strong>
 
             {managedPosts.length > 0 && (
               <button
                 type="button"
                 className="delete-all-btn"
-                onClick={
-                  deleteAllPosts
-                }
+                onClick={deleteAllPosts}
               >
                 Delete All Posts
               </button>
             )}
-
           </div>
 
           {managedPosts.length === 0 ? (
@@ -1393,71 +1368,51 @@ function Admin({ onBack }: AdminProps) {
             </div>
           ) : (
             <div className="admin-post-list">
+              {managedPosts.map((post) => (
+                <article
+                  key={post.id}
+                  className="admin-post-item"
+                >
+                  <div className="admin-post-info">
+                    <span className="post-category">
+                      {post.category}
+                    </span>
 
-              {managedPosts.map(
-                (post) => (
-                  <article
-                    key={post.id}
-                    className="admin-post-item"
-                  >
+                    <h3>{post.title}</h3>
 
-                    <div className="admin-post-info">
+                    <p>{post.description}</p>
 
-                      <span className="post-category">
-                        {post.category}
-                      </span>
+                    <small>
+                      {post.state}
+                      {" • "}
+                      {post.date}
+                    </small>
+                  </div>
 
-                      <h3>
-                        {post.title}
-                      </h3>
+                  <div className="admin-post-actions">
+                    <button
+                      type="button"
+                      className="edit-btn"
+                      onClick={() => editPost(post)}
+                    >
+                      Edit
+                    </button>
 
-                      <p>
-                        {post.description}
-                      </p>
-
-                      <small>
-                        {post.state}
-                        {" • "}
-                        {post.date}
-                      </small>
-
-                    </div>
-
-                    <div className="admin-post-actions">
-
-                      <button
-                        type="button"
-                        className="edit-btn"
-                        onClick={() =>
-                          editPost(post)
-                        }
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        className="delete-btn"
-                        onClick={() =>
-                          deletePost(
-                            post.id
-                          )
-                        }
-                      >
-                        Delete
-                      </button>
-
-                    </div>
-
-                  </article>
-                )
-              )}
-
+                    <button
+                      type="button"
+                      className="delete-btn"
+                      onClick={() =>
+                        deletePost(post.id)
+                      }
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ))}
             </div>
           )}
-
         </section>
-
       </div>
     </main>
   );
@@ -1490,17 +1445,13 @@ function AdminInput({
           : "admin-field"
       }
     >
-      <label>
-        {label}
-      </label>
+      <label>{label}</label>
 
       <input
         type="text"
         value={value}
         onChange={(event) =>
-          onChange(
-            event.target.value
-          )
+          onChange(event.target.value)
         }
         placeholder={placeholder}
       />
@@ -1537,16 +1488,12 @@ function AdminTextarea({
           : "admin-field"
       }
     >
-      <label>
-        {label}
-      </label>
+      <label>{label}</label>
 
       <textarea
         value={value}
         onChange={(event) =>
-          onChange(
-            event.target.value
-          )
+          onChange(event.target.value)
         }
         placeholder={placeholder}
         rows={rows}
@@ -1574,16 +1521,12 @@ function AdminSelect({
 }: AdminSelectProps) {
   return (
     <div className="admin-field">
-      <label>
-        {label}
-      </label>
+      <label>{label}</label>
 
       <select
         value={value}
         onChange={(event) =>
-          onChange(
-            event.target.value
-          )
+          onChange(event.target.value)
         }
       >
         {options.map((option) => (
@@ -1600,3 +1543,4 @@ function AdminSelect({
 }
 
 export default Admin;
+        
