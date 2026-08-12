@@ -116,7 +116,27 @@ function getStoredPosts(): LinkItem[] {
 /* =========================================================
    ADMIN
 ========================================================= */
+type SectionTitleProps = {
+  number: string;
+  title: string;
+  subtitle?: string;
+};
 
+function SectionTitle({
+  number,
+  title,
+  subtitle,
+}: SectionTitleProps) {
+  return (
+    <div className="admin-section-title">
+      <span>{number}</span>
+      <div>
+        <h2>{title}</h2>
+        {subtitle && <small>{subtitle}</small>}
+      </div>
+    </div>
+  );
+}
 function Admin({ onBack }: AdminProps) {
   const [form, setForm] =
     useState<FormState>({ ...emptyForm });
