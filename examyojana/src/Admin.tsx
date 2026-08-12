@@ -16,7 +16,12 @@ const categories: Category[] = [
   "Scholarship",
 ];
 
-const states = ["All India", "Bihar", "Uttar Pradesh", "Delhi"];
+const states = [
+  "All India",
+  "Bihar",
+  "Uttar Pradesh",
+  "Delhi",
+];
 
 type FormState = {
   title: string;
@@ -96,9 +101,13 @@ function getStoredPosts(): LinkItem[] {
       return [];
     }
 
-    const parsed = JSON.parse(saved);
+    const parsed: unknown = JSON.parse(saved);
 
-    return Array.isArray(parsed) ? (parsed as LinkItem[]) : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed as LinkItem[];
   } catch {
     return [];
   }
@@ -109,7 +118,9 @@ function getStoredPosts(): LinkItem[] {
 ========================================================= */
 
 function Admin({ onBack }: AdminProps) {
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [form, setForm] = useState<FormState>({
+    ...emptyForm,
+  });
 
   const [managedPosts, setManagedPosts] = useState<LinkItem[]>(
     getStoredPosts
@@ -119,13 +130,17 @@ function Admin({ onBack }: AdminProps) {
 
   const [saved, setSaved] = useState(false);
 
-  const [generatedData, setGeneratedData] = useState<LinkItem | null>(null);
+  const [generatedData, setGeneratedData] =
+    useState<LinkItem | null>(null);
 
   /* =======================================================
-     FORM UPDATE
+     UPDATE FORM
   ======================================================= */
 
-  const updateField = (field: keyof FormState, value: string) => {
+  const updateField = (
+    field: keyof FormState,
+    value: string
+  ) => {
     setForm((previous) => ({
       ...previous,
       [field]: value,
@@ -191,17 +206,17 @@ function Admin({ onBack }: AdminProps) {
   ======================================================= */
 
   const buildPost = (id: number): LinkItem => {
-    const documents = (form.documents || "")
+    const documents = form.documents
       .split("\n")
       .map((item) => item.trim())
       .filter(Boolean);
 
-    const howToApply = (form.howToApply || "")
+    const howToApply = form.howToApply
       .split("\n")
       .map((item) => item.trim())
       .filter(Boolean);
 
-    const vacancyDetails = (form.vacancyDetails || "")
+    const vacancyDetails = form.vacancyDetails
       .split("\n")
       .map((item) => item.trim())
       .filter(Boolean)
@@ -213,7 +228,11 @@ function Admin({ onBack }: AdminProps) {
           vacancy: parts.slice(1).join("|").trim() || "",
         };
       })
-      .filter((item) => item.post && item.vacancy);
+      .filter(
+        (item) =>
+          item.post.length > 0 &&
+          item.vacancy.length > 0
+      );
 
     return {
       id,
@@ -222,7 +241,7 @@ function Admin({ onBack }: AdminProps) {
 
       category: form.category,
 
-      state: form.state,
+      state: form.state.trim(),
 
       date: new Date().toLocaleDateString("en-IN", {
         day: "2-digit",
@@ -232,32 +251,45 @@ function Admin({ onBack }: AdminProps) {
 
       description: form.description.trim(),
 
-      organization: form.organization.trim() || undefined,
+      organization:
+        form.organization.trim() || undefined,
 
-      postName: form.postName.trim() || undefined,
+      postName:
+        form.postName.trim() || undefined,
 
-      totalVacancy: form.totalVacancy.trim() || undefined,
+      totalVacancy:
+        form.totalVacancy.trim() || undefined,
 
-      applicationStart: form.applicationStart.trim() || undefined,
+      applicationStart:
+        form.applicationStart.trim() || undefined,
 
       applicationLastDate:
         form.applicationLastDate.trim() || undefined,
 
-      examDate: form.examDate.trim() || undefined,
+      examDate:
+        form.examDate.trim() || undefined,
 
-      fee: form.fee.trim() || undefined,
+      fee:
+        form.fee.trim() || undefined,
 
-      ageLimit: form.ageLimit.trim() || undefined,
+      ageLimit:
+        form.ageLimit.trim() || undefined,
 
-      qualification: form.qualification.trim() || undefined,
+      qualification:
+        form.qualification.trim() || undefined,
 
-      eligibility: form.eligibility.trim() || undefined,
+      eligibility:
+        form.eligibility.trim() || undefined,
 
       documents:
-        documents.length > 0 ? documents : undefined,
+        documents.length > 0
+          ? documents
+          : undefined,
 
       howToApply:
-        howToApply.length > 0 ? howToApply : undefined,
+        howToApply.length > 0
+          ? howToApply
+          : undefined,
 
       vacancyDetails:
         vacancyDetails.length > 0
@@ -272,7 +304,7 @@ function Admin({ onBack }: AdminProps) {
   };
 
   /* =======================================================
-     SAVE POSTS
+     SAVE TO LOCAL STORAGE
   ======================================================= */
 
   const savePosts = (posts: LinkItem[]) => {
@@ -289,7 +321,7 @@ function Admin({ onBack }: AdminProps) {
   };
 
   /* =======================================================
-     CREATE / UPDATE POST
+     CREATE / UPDATE
   ======================================================= */
 
   const createPost = () => {
@@ -306,24 +338,27 @@ function Admin({ onBack }: AdminProps) {
     try {
       const oldPosts = getStoredPosts();
 
-      /* ================================================
-         EDIT MODE
-      ================================================= */
+      /* ================= EDIT ================= */
 
       if (editingId !== null) {
         const newPost = buildPost(editingId);
 
-        const postExists = oldPosts.some(
+        const exists = oldPosts.some(
           (post) => post.id === editingId
         );
 
-        if (!postExists) {
-          alert("जिस post को edit किया गया था वह नहीं मिली।");
+        if (!exists) {
+          alert(
+            "जिस post को edit किया गया था वह नहीं मिली।"
+          );
           return;
         }
 
-        const updatedPosts = oldPosts.map((post) =>
-          post.id === editingId ? newPost : post
+        const updatedPosts = oldPosts.map(
+          (post) =>
+            post.id === editingId
+              ? newPost
+              : post
         );
 
         savePosts(updatedPosts);
@@ -337,13 +372,14 @@ function Admin({ onBack }: AdminProps) {
         return;
       }
 
-      /* ================================================
-         CREATE MODE
-      ================================================= */
+      /* ================= CREATE ================= */
 
       const newPost = buildPost(Date.now());
 
-      const updatedPosts = [newPost, ...oldPosts];
+      const updatedPosts = [
+        newPost,
+        ...oldPosts,
+      ];
 
       savePosts(updatedPosts);
 
@@ -358,7 +394,10 @@ function Admin({ onBack }: AdminProps) {
         behavior: "smooth",
       });
     } catch (error) {
-      console.error("Post save error:", error);
+      console.error(
+        "Post save error:",
+        error
+      );
 
       alert(
         "Post save नहीं हो सकी। Browser storage check करें।"
@@ -373,12 +412,14 @@ function Admin({ onBack }: AdminProps) {
   const editPost = (post: LinkItem) => {
     const links = post.links ?? [];
 
-    const findLink = (keywords: string[]) => {
+    const findLink = (
+      keywords: string[]
+    ): string => {
       const found = links.find((link) =>
         keywords.some((keyword) =>
           link.label
             .toLowerCase()
-            .includes(keyword)
+            .includes(keyword.toLowerCase())
         )
       );
 
@@ -434,10 +475,13 @@ function Admin({ onBack }: AdminProps) {
         post.description || "",
 
       applyUrl:
-        findLink(["apply", "online"]),
+        findLink(["apply"]),
 
       notificationUrl:
-        findLink(["notification", "notice"]),
+        findLink([
+          "notification",
+          "notice",
+        ]),
 
       admitCardUrl:
         findLink(["admit"]),
@@ -446,11 +490,11 @@ function Admin({ onBack }: AdminProps) {
         findLink(["result"]),
 
       answerKeyUrl:
-        findLink(["answer key"]),
+        findLink(["answer"]),
 
       officialUrl:
         post.officialUrl ||
-        findLink(["official", "website"]),
+        findLink(["official"]),
 
       documents:
         post.documents?.join("\n") || "",
@@ -475,7 +519,7 @@ function Admin({ onBack }: AdminProps) {
   };
 
   /* =======================================================
-     DELETE SINGLE POST
+     DELETE ONE POST
   ======================================================= */
 
   const deletePost = (id: number) => {
@@ -505,56 +549,34 @@ function Admin({ onBack }: AdminProps) {
 
       if (editingId === id) {
         setEditingId(null);
-        setForm(emptyForm);
+
+        setForm({
+          ...emptyForm,
+        });
       }
 
-      if (generatedData?.id === id) {
+      if (
+        generatedData &&
+        generatedData.id === id
+      ) {
         setGeneratedData(null);
       }
 
       setSaved(false);
     } catch (error) {
-      console.error("Delete error:", error);
+      console.error(
+        "Delete error:",
+        error
+      );
 
-      alert("Post delete नहीं हो सकी।");
+      alert(
+        "Post delete नहीं हो सकी।"
+      );
     }
   };
 
   /* =======================================================
-     CANCEL EDIT
-  ======================================================= */
-
-  const cancelEdit = () => {
-    setEditingId(null);
-
-    setForm(emptyForm);
-
-    setGeneratedData(null);
-
-    setSaved(false);
-  };
-
-  /* =======================================================
-     RESET FORM
-  ======================================================= */
-
-  const resetForm = () => {
-    setForm(emptyForm);
-
-    setEditingId(null);
-
-    setGeneratedData(null);
-
-    setSaved(false);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
-
-  /* =======================================================
-     DELETE ALL
+     DELETE ALL POSTS
   ======================================================= */
 
   const deleteAllPosts = () => {
@@ -574,7 +596,9 @@ function Admin({ onBack }: AdminProps) {
     }
 
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(
+        STORAGE_KEY
+      );
 
       setManagedPosts([]);
 
@@ -582,7 +606,9 @@ function Admin({ onBack }: AdminProps) {
 
       setEditingId(null);
 
-      setForm(emptyForm);
+      setForm({
+        ...emptyForm,
+      });
 
       setSaved(false);
 
@@ -597,8 +623,47 @@ function Admin({ onBack }: AdminProps) {
         error
       );
 
-      alert("Posts delete नहीं हो सकीं।");
+      alert(
+        "Posts delete नहीं हो सकीं।"
+      );
     }
+  };
+
+  /* =======================================================
+     CANCEL EDIT
+  ======================================================= */
+
+  const cancelEdit = () => {
+    setEditingId(null);
+
+    setForm({
+      ...emptyForm,
+    });
+
+    setGeneratedData(null);
+
+    setSaved(false);
+  };
+
+  /* =======================================================
+     RESET
+  ======================================================= */
+
+  const resetForm = () => {
+    setEditingId(null);
+
+    setForm({
+      ...emptyForm,
+    });
+
+    setGeneratedData(null);
+
+    setSaved(false);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   /* =======================================================
@@ -683,12 +748,14 @@ function Admin({ onBack }: AdminProps) {
           </div>
 
           <div className="admin-grid">
-
             <AdminInput
               label="Post Title *"
               value={form.title}
               onChange={(value) =>
-                updateField("title", value)
+                updateField(
+                  "title",
+                  value
+                )
               }
               placeholder="SSC CGL Recruitment 2026"
               full
@@ -711,7 +778,10 @@ function Admin({ onBack }: AdminProps) {
               value={form.state}
               options={states}
               onChange={(value) =>
-                updateField("state", value)
+                updateField(
+                  "state",
+                  value
+                )
               }
             />
 
@@ -750,7 +820,6 @@ function Admin({ onBack }: AdminProps) {
               }
               placeholder="5000 Posts"
             />
-
           </div>
         </section>
 
@@ -772,7 +841,6 @@ function Admin({ onBack }: AdminProps) {
           </div>
 
           <div className="admin-grid">
-
             <AdminInput
               label="Application Start"
               value={form.applicationStart}
@@ -815,15 +883,17 @@ function Admin({ onBack }: AdminProps) {
               label="Application Fee"
               value={form.fee}
               onChange={(value) =>
-                updateField("fee", value)
+                updateField(
+                  "fee",
+                  value
+                )
               }
               placeholder="₹100"
             />
-
           </div>
         </section>
 
-        {/* =================================================
+                {/* =================================================
             ELIGIBILITY
         ================================================= */}
 
@@ -841,29 +911,20 @@ function Admin({ onBack }: AdminProps) {
           </div>
 
           <div className="admin-grid">
-
             <AdminInput
               label="Age Limit"
               value={form.ageLimit}
               onChange={(value) =>
-                updateField(
-                  "ageLimit",
-                  value
-                )
+                updateField("ageLimit", value)
               }
               placeholder="18-27 Years"
             />
 
             <AdminInput
               label="Qualification"
-              value={
-                form.qualification
-              }
+              value={form.qualification}
               onChange={(value) =>
-                updateField(
-                  "qualification",
-                  value
-                )
+                updateField("qualification", value)
               }
               placeholder="Graduation"
             />
@@ -872,19 +933,15 @@ function Admin({ onBack }: AdminProps) {
               label="Eligibility"
               value={form.eligibility}
               onChange={(value) =>
-                updateField(
-                  "eligibility",
-                  value
-                )
+                updateField("eligibility", value)
               }
               placeholder="Candidate must fulfill the official eligibility criteria."
               full
             />
-
           </div>
         </section>
 
-                {/* =================================================
+        {/* =================================================
             ARTICLE CONTENT
         ================================================= */}
 
@@ -894,53 +951,71 @@ function Admin({ onBack }: AdminProps) {
 
             <div>
               <h2>Article Content</h2>
-              <small>User को दिखाई देने वाली जानकारी</small>
+
+              <small>
+                पोस्ट की पूरी जानकारी
+              </small>
             </div>
           </div>
 
-          <AdminTextarea
-            label="Description *"
-            value={form.description}
-            onChange={(value) => updateField("description", value)}
-            placeholder="इस पोस्ट के बारे में short और useful जानकारी लिखें..."
-            full
-          />
+          <div className="admin-grid">
+            <AdminTextarea
+              label="Description *"
+              value={form.description}
+              onChange={(value) =>
+                updateField("description", value)
+              }
+              placeholder="इस पोस्ट के बारे में पूरी जानकारी लिखें..."
+              full
+            />
 
-          <AdminTextarea
-            label="Required Documents"
-            value={form.documents}
-            onChange={(value) => updateField("documents", value)}
-            placeholder={`Aadhaar Card
-Educational Certificate
-Passport Size Photograph
-Signature`}
-            help="हर document को नई line में लिखें।"
-            full
-          />
+            <AdminTextarea
+              label="Documents Required"
+              value={form.documents}
+              onChange={(value) =>
+                updateField("documents", value)
+              }
+              placeholder={`एक लाइन में एक document लिखें।
 
-          <AdminTextarea
-            label="How To Apply"
-            value={form.howToApply}
-            onChange={(value) => updateField("howToApply", value)}
-            placeholder={`Official website खोलें।
+Aadhaar Card
+10th Marksheet
+12th Marksheet
+Passport Size Photograph`}
+              full
+            />
+
+            <AdminTextarea
+              label="How To Apply"
+              value={form.howToApply}
+              onChange={(value) =>
+                updateField("howToApply", value)
+              }
+              placeholder={`एक लाइन में एक step लिखें।
+
+Official website खोलें।
 Registration करें।
 Application form भरें।
 Documents upload करें।
-Final form submit करें।`}
-            help="हर step को नई line में लिखें।"
-            full
-          />
+Final submit करें।`}
+              full
+            />
 
-          <AdminTextarea
-            label="Vacancy Details"
-            value={form.vacancyDetails}
-            onChange={(value) => updateField("vacancyDetails", value)}
-            placeholder={`SSC CGL | 3000
-SSC CHSL | 1500
-Junior Assistant | 500`}
-            help="Format: Post Name | Vacancy — हर post को नई line में लिखें।"
-            full
-          />
+            <AdminTextarea
+              label="Vacancy Details"
+              value={form.vacancyDetails}
+              onChange={(value) =>
+                updateField("vacancyDetails", value)
+              }
+              placeholder={`Format:
+
+Post Name | Vacancy
+
+SSC CGL | 5000
+Assistant | 1200
+Clerk | 800`}
+              full
+            />
+          </div>
         </section>
 
         {/* =================================================
@@ -953,7 +1028,10 @@ Junior Assistant | 500`}
 
             <div>
               <h2>Official Links</h2>
-              <small>केवल official website के verified links डालें।</small>
+
+              <small>
+                सभी जरूरी official links
+              </small>
             </div>
           </div>
 
@@ -961,8 +1039,10 @@ Junior Assistant | 500`}
             <AdminInput
               label="Apply Online URL"
               value={form.applyUrl}
-              onChange={(value) => updateField("applyUrl", value)}
-              placeholder="https://example.gov.in/apply"
+              onChange={(value) =>
+                updateField("applyUrl", value)
+              }
+              placeholder="https://example.com/apply"
               full
             />
 
@@ -972,7 +1052,7 @@ Junior Assistant | 500`}
               onChange={(value) =>
                 updateField("notificationUrl", value)
               }
-              placeholder="https://example.gov.in/notification.pdf"
+              placeholder="https://example.com/notification"
               full
             />
 
@@ -982,15 +1062,17 @@ Junior Assistant | 500`}
               onChange={(value) =>
                 updateField("admitCardUrl", value)
               }
-              placeholder="https://example.gov.in/admit-card"
+              placeholder="https://example.com/admit-card"
               full
             />
 
             <AdminInput
               label="Result URL"
               value={form.resultUrl}
-              onChange={(value) => updateField("resultUrl", value)}
-              placeholder="https://example.gov.in/result"
+              onChange={(value) =>
+                updateField("resultUrl", value)
+              }
+              placeholder="https://example.com/result"
               full
             />
 
@@ -1000,31 +1082,41 @@ Junior Assistant | 500`}
               onChange={(value) =>
                 updateField("answerKeyUrl", value)
               }
-              placeholder="https://example.gov.in/answer-key"
+              placeholder="https://example.com/answer-key"
               full
             />
 
             <AdminInput
-              label="Official Website"
+              label="Official Website URL"
               value={form.officialUrl}
               onChange={(value) =>
                 updateField("officialUrl", value)
               }
-              placeholder="https://example.gov.in"
+              placeholder="https://example.com"
               full
             />
           </div>
         </section>
 
         {/* =================================================
-            ACTIONS
+            FORM ACTIONS
         ================================================= */}
 
-        <div className="admin-actions">
+        <section className="admin-actions">
+          <button
+            type="button"
+            className="admin-primary-button"
+            onClick={createPost}
+          >
+            {editingId !== null
+              ? "✓ Update Post"
+              : "✓ Create Post"}
+          </button>
+
           {editingId !== null && (
             <button
               type="button"
-              className="admin-reset"
+              className="admin-secondary-button"
               onClick={cancelEdit}
             >
               Cancel Edit
@@ -1033,105 +1125,350 @@ Junior Assistant | 500`}
 
           <button
             type="button"
-            className="admin-reset"
+            className="admin-secondary-button"
             onClick={resetForm}
           >
-            Reset
+            Clear Form
           </button>
-
-          <button
-            type="button"
-            className="admin-submit"
-            onClick={createPost}
-          >
-            {editingId !== null
-              ? "✓ Update & Save Post"
-              : "✓ Generate & Save Post"}
-          </button>
-        </div>
+        </section>
 
         {/* =================================================
-            GENERATED DATA
+            GENERATED DATA PREVIEW
         ================================================= */}
 
         {generatedData && (
-          <section className="admin-card generated-card">
+          <section className="admin-card generated-preview">
             <div className="admin-section-title">
               <span>✓</span>
 
               <div>
-                <h2>Generated Data</h2>
-                <small>Post successfully saved.</small>
+                <h2>Generated Post Preview</h2>
+
+                <small>
+                  Save होने के बाद post की जानकारी
+                </small>
               </div>
             </div>
 
-            <pre className="generated-code">
-              {JSON.stringify(generatedData, null, 2)}
-            </pre>
+            <div className="preview-box">
+              <h3>{generatedData.title}</h3>
 
-            {onBack && (
-              <div className="generated-actions">
-                <button
-                  type="button"
-                  className="admin-submit"
-                  onClick={onBack}
-                >
-                  ← Go To Home
-                </button>
+              <div className="preview-meta">
+                <span>
+                  {generatedData.category}
+                </span>
+
+                <span>
+                  {generatedData.state}
+                </span>
+
+                <span>
+                  {generatedData.date}
+                </span>
               </div>
-            )}
+
+              <p>
+                {generatedData.description}
+              </p>
+
+              {generatedData.organization && (
+                <p>
+                  <strong>Organization:</strong>{" "}
+                  {generatedData.organization}
+                </p>
+              )}
+
+              {generatedData.postName && (
+                <p>
+                  <strong>Post / Exam:</strong>{" "}
+                  {generatedData.postName}
+                </p>
+              )}
+
+              {generatedData.totalVacancy && (
+                <p>
+                  <strong>Total Vacancy:</strong>{" "}
+                  {generatedData.totalVacancy}
+                </p>
+              )}
+
+              {generatedData.applicationStart && (
+                <p>
+                  <strong>Application Start:</strong>{" "}
+                  {generatedData.applicationStart}
+                </p>
+              )}
+
+              {generatedData.applicationLastDate && (
+                <p>
+                  <strong>Last Date:</strong>{" "}
+                  {generatedData.applicationLastDate}
+                </p>
+              )}
+
+              {generatedData.examDate && (
+                <p>
+                  <strong>Exam Date:</strong>{" "}
+                  {generatedData.examDate}
+                </p>
+              )}
+
+              {generatedData.fee && (
+                <p>
+                  <strong>Fee:</strong>{" "}
+                  {generatedData.fee}
+                </p>
+              )}
+
+              {generatedData.ageLimit && (
+                <p>
+                  <strong>Age Limit:</strong>{" "}
+                  {generatedData.ageLimit}
+                </p>
+              )}
+
+              {generatedData.qualification && (
+                <p>
+                  <strong>Qualification:</strong>{" "}
+                  {generatedData.qualification}
+                </p>
+              )}
+
+              {generatedData.eligibility && (
+                <p>
+                  <strong>Eligibility:</strong>{" "}
+                  {generatedData.eligibility}
+                </p>
+              )}
+
+              {generatedData.vacancyDetails &&
+                generatedData.vacancyDetails.length > 0 && (
+                  <div className="preview-list">
+                    <strong>Vacancy Details</strong>
+
+                    {generatedData.vacancyDetails.map(
+                      (item, index) => (
+                        <div key={index}>
+                          {item.post} — {item.vacancy}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+
+              {generatedData.documents &&
+                generatedData.documents.length > 0 && (
+                  <div className="preview-list">
+                    <strong>
+                      Documents Required
+                    </strong>
+
+                    {generatedData.documents.map(
+                      (item, index) => (
+                        <div key={index}>
+                          • {item}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+
+              {generatedData.howToApply &&
+                generatedData.howToApply.length > 0 && (
+                  <div className="preview-list">
+                    <strong>
+                      How To Apply
+                    </strong>
+
+                    {generatedData.howToApply.map(
+                      (item, index) => (
+                        <div key={index}>
+                          {index + 1}. {item}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+
+              {generatedData.links &&
+                generatedData.links.length > 0 && (
+                  <div className="preview-links">
+                    <strong>
+                      Official Links
+                    </strong>
+
+                    {generatedData.links.map(
+                      (link, index) => (
+                        <a
+                          key={index}
+                          href={link.url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {link.label}
+                        </a>
+                      )
+                    )}
+                  </div>
+                )}
+            </div>
           </section>
         )}
 
         {/* =================================================
-            POST MANAGEMENT
+            ADMIN POST MANAGEMENT
         ================================================= */}
 
-        <section className="admin-card">
-          <div className="admin-section-title">
-            <span>6</span>
-
-            <div>
-              <h2>Post Management</h2>
-              <small>
-                Admin से बनाई गई posts को Edit या Delete करें।
-              </small>
-            </div>
-          </div>
-
-          <AdminPostManagement
-            posts={managedPosts}
-            onEdit={editPost}
-            onDelete={deletePost}
-          />
-        </section>
-
-        {/* =================================================
-            STORAGE CONTROL
-        ================================================= */}
-
-        <section className="admin-card">
-          <div className="admin-section-title">
-            <span>⚙</span>
-
-            <div>
-              <h2>Admin Storage</h2>
-              <small>
-                Browser में बनाई गई सभी posts का control
-              </small>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="admin-reset"
-            onClick={deleteAllPosts}
-          >
-            Delete All Admin Created Posts
-          </button>
-        </section>
+        <AdminPostManagement
+          posts={managedPosts}
+          editingId={editingId}
+          onEdit={editPost}
+          onDelete={deletePost}
+          onDeleteAll={deleteAllPosts}
+        />
       </div>
     </main>
+  );
+}
+
+/* =========================================================
+   ADMIN POST MANAGEMENT
+========================================================= */
+
+type AdminPostManagementProps = {
+  posts: LinkItem[];
+  editingId: number | null;
+  onEdit: (post: LinkItem) => void;
+  onDelete: (id: number) => void;
+  onDeleteAll: () => void;
+};
+
+function AdminPostManagement({
+  posts,
+  editingId,
+  onEdit,
+  onDelete,
+  onDeleteAll,
+}: AdminPostManagementProps) {
+  return (
+    <section className="admin-card admin-post-management">
+      <div className="admin-section-title">
+        <span>6</span>
+
+        <div>
+          <h2>Admin Post Management</h2>
+
+          <small>
+            बनाई गई सभी posts को manage करें।
+          </small>
+        </div>
+      </div>
+
+      <div className="management-header">
+        <div>
+          <strong>
+            Total Posts: {posts.length}
+          </strong>
+        </div>
+
+        {posts.length > 0 && (
+          <button
+            type="button"
+            className="admin-danger-button"
+            onClick={onDeleteAll}
+          >
+            Delete All Posts
+          </button>
+        )}
+      </div>
+
+      {posts.length === 0 ? (
+        <div className="empty-management">
+          <div className="empty-icon">
+            📭
+          </div>
+
+          <h3>No Admin Posts Yet</h3>
+
+          <p>
+            अभी Admin Panel से कोई post create नहीं की गई है।
+          </p>
+        </div>
+      ) : (
+        <div className="management-list">
+          {posts.map((post) => (
+            <article
+              key={post.id}
+              className={
+                editingId === post.id
+                  ? "management-item editing"
+                  : "management-item"
+              }
+            >
+              <div className="management-content">
+                <div className="management-top">
+                  <span className="management-category">
+                    {post.category}
+                  </span>
+
+                  <span className="management-state">
+                    {post.state}
+                  </span>
+                </div>
+
+                <h3>{post.title}</h3>
+
+                <p>
+                  {post.description}
+                </p>
+
+                <div className="management-info">
+                  {post.organization && (
+                    <span>
+                      🏢 {post.organization}
+                    </span>
+                  )}
+
+                  {post.postName && (
+                    <span>
+                      📋 {post.postName}
+                    </span>
+                  )}
+
+                  {post.totalVacancy && (
+                    <span>
+                      👥 {post.totalVacancy}
+                    </span>
+                  )}
+
+                  <span>
+                    📅 {post.date}
+                  </span>
+                </div>
+              </div>
+
+              <div className="management-actions">
+                <button
+                  type="button"
+                  className="admin-edit-button"
+                  onClick={() => onEdit(post)}
+                >
+                  ✏ Edit
+                </button>
+
+                <button
+                  type="button"
+                  className="admin-delete-button"
+                  onClick={() => onDelete(post.id)}
+                >
+                  🗑 Delete
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -1139,7 +1476,7 @@ Junior Assistant | 500`}
    INPUT COMPONENT
 ========================================================= */
 
-type InputProps = {
+type AdminInputProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -1152,19 +1489,68 @@ function AdminInput({
   value,
   onChange,
   placeholder,
-  full,
-}: InputProps) {
+  full = false,
+}: AdminInputProps) {
   return (
-    <div className={full ? "admin-field full" : "admin-field"}>
-      <label>{label}</label>
+    <label
+      className={
+        full
+          ? "admin-field admin-field-full"
+          : "admin-field"
+      }
+    >
+      <span>{label}</span>
 
       <input
         type="text"
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
         placeholder={placeholder}
       />
-    </div>
+    </label>
+  );
+}
+
+/* =========================================================
+   TEXTAREA COMPONENT
+========================================================= */
+
+type AdminTextareaProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  full?: boolean;
+};
+
+function AdminTextarea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  full = false,
+}: AdminTextareaProps) {
+  return (
+    <label
+      className={
+        full
+          ? "admin-field admin-field-full"
+          : "admin-field"
+      }
+    >
+      <span>{label}</span>
+
+      <textarea
+        value={value}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
+        placeholder={placeholder}
+        rows={6}
+      />
+    </label>
   );
 }
 
@@ -1172,7 +1558,7 @@ function AdminInput({
    SELECT COMPONENT
 ========================================================= */
 
-type SelectProps = {
+type AdminSelectProps = {
   label: string;
   value: string;
   options: readonly string[];
@@ -1184,134 +1570,27 @@ function AdminSelect({
   value,
   options,
   onChange,
-}: SelectProps) {
+}: AdminSelectProps) {
   return (
-    <div className="admin-field">
-      <label>{label}</label>
+    <label className="admin-field">
+      <span>{label}</span>
 
       <select
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
       >
         {options.map((option) => (
-          <option key={option} value={option}>
+          <option
+            key={option}
+            value={option}
+          >
             {option}
           </option>
         ))}
       </select>
-    </div>
-  );
-}
-
-/* =========================================================
-   TEXTAREA COMPONENT
-========================================================= */
-
-type TextareaProps = {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  help?: string;
-  full?: boolean;
-};
-
-function AdminTextarea({
-  label,
-  value,
-  onChange,
-  placeholder,
-  help,
-  full,
-}: TextareaProps) {
-  return (
-    <div className={full ? "admin-field full" : "admin-field"}>
-      <label>{label}</label>
-
-      <textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        rows={6}
-      />
-
-      {help && (
-        <small className="field-help">
-          {help}
-        </small>
-      )}
-    </div>
-  );
-}
-
-/* =========================================================
-   POST MANAGEMENT COMPONENT
-========================================================= */
-
-type PostManagementProps = {
-  posts: LinkItem[];
-  onEdit: (post: LinkItem) => void;
-  onDelete: (id: number) => void;
-};
-
-function AdminPostManagement({
-  posts,
-  onEdit,
-  onDelete,
-}: PostManagementProps) {
-  if (posts.length === 0) {
-    return (
-      <div className="empty-state">
-        <div>📭</div>
-
-        <h3>No Admin Posts</h3>
-
-        <p>
-          अभी तक Admin Panel से कोई post create नहीं की गई है।
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="admin-post-management">
-      {posts.map((post) => (
-        <div
-          className="admin-post-item"
-          key={post.id}
-        >
-          <div className="admin-post-info">
-            <strong>{post.title}</strong>
-
-            <small>
-              {post.category} • {post.state}
-            </small>
-
-            <small>
-              Updated: {post.date}
-            </small>
-          </div>
-
-          <div className="admin-post-actions">
-            <button
-              type="button"
-              className="admin-edit-button"
-              onClick={() => onEdit(post)}
-            >
-              ✏️ Edit
-            </button>
-
-            <button
-              type="button"
-              className="admin-delete-button"
-              onClick={() => onDelete(post.id)}
-            >
-              🗑 Delete
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
+    </label>
   );
 }
 
