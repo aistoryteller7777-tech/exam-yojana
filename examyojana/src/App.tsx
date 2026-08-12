@@ -4,7 +4,8 @@ import Admin from "./Admin";
 import ArticlePage from "./ArticlePage";
 import InfoPage from "./InfoPage";
 
-import { data, type Category, type LinkItem } from "./data";
+import { data } from "./data";
+import type { Category, LinkItem } from "./data";
 
 /* =========================================================
    TYPES
